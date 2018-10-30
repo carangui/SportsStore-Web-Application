@@ -99,11 +99,11 @@ namespace SportsStore.UnitTests
 
         [TestMethod]
         public void Can_Filter_Products()
-        {   
+        {
             // Arrange
             // - create the mock repository    
             Mock<IProductRepository> mock = new Mock<IProductRepository>();
-            mock.Setup(m => m.Products).Returns(new Product[] 
+            mock.Setup(m => m.Products).Returns(new Product[]
             {
                 new Product {ProductID = 1, Name = "P1", Category = "Cat1"},
                 new Product {ProductID = 2, Name = "P2", Category = "Cat2"},
@@ -111,15 +111,15 @@ namespace SportsStore.UnitTests
                 new Product {ProductID = 4, Name = "P4", Category = "Cat2"},
                 new Product {ProductID = 5, Name = "P5", Category = "Cat3"}
             });
-            
+
             // Arrange - create a controller and make the page size 3 items  
             ProductController controller = new ProductController(mock.Object);
             controller.PageSize = 3;
-            
+
             // Action  
-            Product[] result = ((ProductsListViewModel)controller.List("Cat2", 1).Model)  
+            Product[] result = ((ProductsListViewModel)controller.List("Cat2", 1).Model)
                 .Products.ToArray();
-            
+
             // Assert  
             Assert.AreEqual(result.Length, 2);
             Assert.IsTrue(result[0].Name == "P2" && result[0].Category == "Cat2");
@@ -132,7 +132,7 @@ namespace SportsStore.UnitTests
             // Arrange 
             // - create the mock repository 
             Mock<IProductRepository> mock = new Mock<IProductRepository>();
-            mock.Setup(m => m.Products).Returns(new Product[] 
+            mock.Setup(m => m.Products).Returns(new Product[]
             {
                 new Product {ProductID = 1, Name = "P1", Category = "Apples"},
                 new Product {ProductID = 2, Name = "P2", Category = "Apples"},
@@ -146,7 +146,7 @@ namespace SportsStore.UnitTests
             // Act = get the set of categories  
             string[] results =
                 ((IEnumerable<string>)target.Menu().Model).ToArray();
-            
+
             // Assert  
             Assert.AreEqual(results.Length, 3);
             Assert.AreEqual(results[0], "Apples");
@@ -174,7 +174,7 @@ namespace SportsStore.UnitTests
 
             // Action    
             string result = target.Menu(categoryToSelect).ViewBag.SelectedCategory;
-            
+
             // Assert   
             Assert.AreEqual(categoryToSelect, result);
         }
@@ -185,7 +185,7 @@ namespace SportsStore.UnitTests
             // Arrange  
             // - create the mock repository   
             Mock<IProductRepository> mock = new Mock<IProductRepository>();
-            mock.Setup(m => m.Products).Returns(new Product[] 
+            mock.Setup(m => m.Products).Returns(new Product[]
             {
                 new Product {ProductID = 1, Name = "P1", Category = "Cat1"},
                 new Product {ProductID = 2, Name = "P2", Category = "Cat2"},
@@ -199,13 +199,13 @@ namespace SportsStore.UnitTests
             target.PageSize = 3;
 
             // Action - test the product counts for different categories   
-            int res1 = ((ProductsListViewModel)target   
+            int res1 = ((ProductsListViewModel)target
                 .List("Cat1").Model).PagingInfo.TotalItems;
-            int res2 = ((ProductsListViewModel)target     
+            int res2 = ((ProductsListViewModel)target
                 .List("Cat2").Model).PagingInfo.TotalItems;
-            int res3 = ((ProductsListViewModel)target    
+            int res3 = ((ProductsListViewModel)target
                 .List("Cat3").Model).PagingInfo.TotalItems;
-            int resAll = ((ProductsListViewModel)target    
+            int resAll = ((ProductsListViewModel)target
                 .List(null).Model).PagingInfo.TotalItems;
 
             // Assert   
@@ -213,6 +213,71 @@ namespace SportsStore.UnitTests
             Assert.AreEqual(res2, 2);
             Assert.AreEqual(res3, 1);
             Assert.AreEqual(resAll, 5);
-        } 
+        }
+
+        [TestMethod]
+        public void Can_Add_To_Cart()
+        {
+            // Arrange - create the mock repository
+            Mock<IProductRepository> mock = new Mock<IProductRepository>();
+            mock.Setup(m => m.Products).Returns(new Product[]
+            {
+                new Product {ProductID = 1, Name = "P1", Category = "Apples"},
+            }.AsQueryable());
+
+            // Arrange - create a Cart
+            Cart cart = new Cart();
+
+            // Arrange - create the controller
+            CartController target = new CartController(mock.Object);
+
+            // Act - add a product to the cart
+            target.AddToCart(cart, 1, null);
+
+            // Assert
+            Assert.AreEqual(cart.Lines.Count(), 1);
+            Assert.AreEqual(cart.Lines.ToArray()[0].Product.ProductID, 1);
+        }
+
+        [TestMethod]
+        public void Adding_Product_To_Cart_Goes_To_Cart_Screen()
+        {
+            // Arrange - create the mock repository
+            Mock<IProductRepository> mock = new Mock<IProductRepository>();
+            mock.Setup(m => m.Products).Returns(new Product[]
+            {
+                new Product {ProductID = 1, Name = "P1", Category = "Apples"},
+            }.AsQueryable());
+
+            // Arrange - create a Cart
+            Cart cart = new Cart();
+
+            // Arrange - create the controller
+            CartController target = new CartController(mock.Object);
+
+            // Act - add a product to the cart
+            RedirectToRouteResult result = target.AddToCart(cart, 2, "myUrl");
+
+            // Assert
+            Assert.AreEqual(result.RouteValues["action"], "Index");
+            Assert.AreEqual(result.RouteValues["returnUrl"], "myUrl");
+        }
+
+        [TestMethod]
+        public void Can_View_Cart_Contents()
+        {
+            // Arrange - create a Cart
+            Cart cart = new Cart();
+
+            // Arrange - create the controller
+            CartController target = new CartController(null);
+
+            // Act - call the Index action method
+            CartIndexViewModel result = (CartIndexViewModel)target.Index(cart, "myUrl").ViewData.Model;
+
+            // Assert
+            Assert.AreSame(result.Cart, cart);
+            Assert.AreEqual(result.ReturnUrl, "myUrl");
+        }
     }
 }
