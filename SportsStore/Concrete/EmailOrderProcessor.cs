@@ -14,8 +14,8 @@ namespace SportsStore.Domain.Concrete
 {
     public class EmailSettings
     {
-        public string MailToAddress = "freddycarangui@outlook.com";
-        public string MailFromAddress = "phreddee95@live.com";
+        public string MailToAddress = "someemail@email.com";
+        public string MailFromAddress = "someemail@email.com";
         public bool UseSsl = true;
         public string Username = "MySmtpUsername";
         public string Password = "MySmtpPassword";
